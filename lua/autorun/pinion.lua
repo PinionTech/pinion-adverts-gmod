@@ -7,6 +7,11 @@ if SERVER then
 	Pinion.motd_required_maximum = CreateConVar("pinion_motd_max_time", "0", FCVAR_ARCHIVE, "Maximum desired viewing time for the user")
 	Pinion.motd_immunity = CreateConVar("pinion_motd_immunity", "0", FCVAR_ARCHIVE, "Set to 1 to allow immunity based on user's group")
 	Pinion.motd_immunity_group = CreateConVar("pinion_motd_immunity_group", "admin", FCVAR_ARCHIVE, "Set to the group you would like to give immunity to")
+	
+	local gamemode = engine.ActiveGamemode()
+	if file.Exists("integration/" .. gamemode .. ".lua", "LUA") then
+		include("integration/" .. gamemode .. ".lua")
+	end
 end
 
 Pinion.MOTD = nil
@@ -16,6 +21,8 @@ Pinion.RequiredTime = nil
 Pinion.ConnectedThisMap = {}
 Pinion.TRIGGER_CONNECT = 1
 Pinion.TRIGGER_LEVELCHANGE = 2
+
+Pinion.DURATION_FUDGE_FACTOR = 1
 
 local function pretty_print_ip(ip)
 	return string.format("%u.%u.%u.%u", 
@@ -43,8 +50,13 @@ function Pinion:CreateMOTDPanel(title, url, duration, ip, port, steamid, trigger
 	self.MOTD.HTML:SetSize(w, h - 75)
 	self.MOTD.HTML:OpenURL(url)
 	self.MOTD.HTML:AddFunction( "motd", "close", function( param )
-		self.MOTD:Remove()
-		self.MOTD = nil
+		-- just to be safe, we'll give the browser time to finish
+		timer.Simple(3, function()
+			if self.MOTD then
+				self.MOTD:Remove()
+				self.MOTD = nil
+			end
+		end)
 	end )
 	
 	self.MOTD.Accept = self.MOTD.Accept or vgui.Create("DButton", self.MOTD)
@@ -81,11 +93,11 @@ function Pinion:CreateMOTDPanel(title, url, duration, ip, port, steamid, trigger
 	end
 	
 	self.StartTime = RealTime()
-	self.RequiredTime = RealTime() + duration
+	self.RequiredTime = RealTime() + self.DURATION_FUDGE_FACTOR + duration
 end
 
 function Pinion:AdjustDuration(duration)
-	self.RequiredTime = self.StartTime + duration
+	self.RequiredTime = self.StartTime + self.DURATION_FUDGE_FACTOR + duration
 end
 
 function Pinion:MOTDClosed()
@@ -105,10 +117,24 @@ function Pinion:ShowMOTD(ply)
 		timer.Simple(1, function()
 			if not IsValid(ply) then return end
 			
-			ply.FetchDurationTries = 5
+			ply._FetchDurationTries = 5
 			self:GetUserAdDuration(ply, duration, self.SendMOTDAdjustment)
 		end)
 	end
+	
+	ply._LastAdDuration = duration
+	ply._ViewingStartTime = RealTime() + self.DURATION_FUDGE_FACTOR
+	ply._ViewingMOTD = true
+end
+
+function Pinion:ClosedMOTD(ply)
+	if not ply._ViewingMOTD then return end
+	ply._ViewingMOTD = false
+	
+	local duration_viewed = RealTime() - ply._ViewingStartTime
+	local completed = ply._LastAdDuration > 0 and duration_viewed > ply._LastAdDuration
+
+	hook.Call("Pinion:PlayerViewedAd", GAMEMODE, ply, completed)
 end
 
 function Pinion:SendMOTDToClient(ply, duration)
@@ -146,12 +172,13 @@ function Pinion:GetUserAdDuration(ply, duration_sent, callback_adjust)
 		
 		if code == 200 then
 			local duration = tonumber(body)
+			ply._LastAdDuration = duration
 			if duration and duration < duration_sent then
-				callback_adjust(ply, duration)
+				callback_adjust(self, ply, duration)
 			end
 		else
-			if ply.FetchDurationTries > 0 then
-				ply.FetchDurationTries = ply.FetchDurationTries - 1
+			if ply._FetchDurationTries > 0 then
+				ply._FetchDurationTries = ply._FetchDurationTries - 1
 				timer.Simple(3, function()
 					self:GetUserAdDuration(ply, duration_sent, callback_adjust)
 				end)
@@ -160,17 +187,18 @@ function Pinion:GetUserAdDuration(ply, duration_sent, callback_adjust)
 	end)
 end
 
+Pinion.Net = {}
 if SERVER then
 	util.AddNetworkString("PinionShowMOTD")
 	util.AddNetworkString("PinionClosedMOTD")
 	util.AddNetworkString("PinionAdjustMOTD")
 	
-	function Pinion.ClosedMOTD(len, ply)
-
+	function Pinion.Net.ClosedMOTD(len, ply)
+		Pinion:ClosedMOTD(ply)
 	end
-	net.Receive("PinionClosedMOTD", Pinion.ClosedMOTD)
+	net.Receive("PinionClosedMOTD", Pinion.Net.ClosedMOTD)
 else
-	function Pinion.DisplayMOTD(len)
+	function Pinion.Net.DisplayMOTD(len)
 		local title, url = net.ReadString(), net.ReadString()
 		local duration = net.ReadInt(16)
 		local ip, port = net.ReadInt(32), net.ReadInt(16)
@@ -179,16 +207,16 @@ else
 
 		Pinion:CreateMOTDPanel(title, url, duration, ip, port, steamid, trigger_type)
 	end
-	net.Receive("PinionShowMOTD", Pinion.DisplayMOTD)
+	net.Receive("PinionShowMOTD", Pinion.Net.DisplayMOTD)
 	
-	function Pinion.AdjustMOTD(len)
+	function Pinion.Net.AdjustMOTD(len)
 		local duration = net.ReadInt(16)
 		
 		if Pinion.MOTD then
 			Pinion:AdjustDuration(duration)
 		end
 	end
-	net.Receive("PinionAdjustMOTD", Pinion.AdjustMOTD)
+	net.Receive("PinionAdjustMOTD", Pinion.Net.AdjustMOTD)
 end
 
 hook.Add("PlayerConnect", "Pinion:PlayerConnect", function(name, address)
