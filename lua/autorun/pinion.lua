@@ -1,12 +1,14 @@
 AddCSLuaFile("pinion.lua")
 
-local Pinion = {}
+Pinion = {}
 if SERVER then
 	Pinion.motd_url = CreateConVar("pinion_motd_url", "http://motd.pinion.gg/COMMUNITY/GAME/motd.html", FCVAR_ARCHIVE, "URL to to your MOTD")
 	Pinion.motd_title = CreateConVar("pinion_motd_title", "A sponsored message from your server admin", FCVAR_ARCHIVE, "Title of your MOTD")
 	Pinion.motd_required_maximum = CreateConVar("pinion_motd_max_time", "0", FCVAR_ARCHIVE, "Maximum desired viewing time for the user")
 	Pinion.motd_immunity = CreateConVar("pinion_motd_immunity", "0", FCVAR_ARCHIVE, "Set to 1 to allow immunity based on user's group")
 	Pinion.motd_immunity_group = CreateConVar("pinion_motd_immunity_group", "admin", FCVAR_ARCHIVE, "Set to the group you would like to give immunity to")
+	Pinion.motd_show_mode = CreateConVar("pinion_motd_show_mode", "1", FCVAR_ARCHIVE, "Set to 1 to show on player connect. Set to 2 to show at opportune gamemode times")
+	Pinion.motd_cooldown_time = CreateConVar("pinion_motd_cooldown_time", "300", FCVAR_ARCHIVE, "Minimum time in seconds between ads being shown to users")
 	
 	local gamemode = engine.ActiveGamemode()
 	if file.Exists("integration/" .. gamemode .. ".lua", "LUA") then
@@ -23,6 +25,7 @@ Pinion.TRIGGER_CONNECT = 1
 Pinion.TRIGGER_LEVELCHANGE = 2
 
 Pinion.DURATION_FUDGE_FACTOR = 1
+Pinion.GamemodesSupportingInterrupt = {'darkrp', 'sandbox', 'terrortown', 'zombiesurvival'}
 
 local function pretty_print_ip(ip)
 	return string.format("%u.%u.%u.%u", 
@@ -109,6 +112,11 @@ function Pinion:MOTDClosed()
 end
 
 function Pinion:ShowMOTD(ply)
+	-- if we've already shown an ad recently, don't show another yet
+	if ply._ViewingStartTime and RealTime() < ply._ViewingStartTime + self.motd_cooldown_time:GetInt() then
+		return
+	end
+
 	local duration = self.motd_required_maximum:GetInt()
 	
 	self:SendMOTDToClient(ply, duration)
@@ -123,7 +131,7 @@ function Pinion:ShowMOTD(ply)
 	end
 	
 	ply._LastAdDuration = duration
-	ply._ViewingStartTime = RealTime() + self.DURATION_FUDGE_FACTOR
+	ply._ViewingStartTime = RealTime()
 	ply._ViewingMOTD = true
 end
 
@@ -131,7 +139,7 @@ function Pinion:ClosedMOTD(ply)
 	if not ply._ViewingMOTD then return end
 	ply._ViewingMOTD = false
 	
-	local duration_viewed = RealTime() - ply._ViewingStartTime
+	local duration_viewed = RealTime() - (ply._ViewingStartTime + self.DURATION_FUDGE_FACTOR)
 	local completed = ply._LastAdDuration > 0 and duration_viewed > ply._LastAdDuration
 
 	hook.Call("Pinion:PlayerViewedAd", GAMEMODE, ply, completed)
@@ -235,3 +243,14 @@ hook.Add("PlayerInitialSpawn", "Pinion:PlayerSpawnMOTD", function(ply)
 	
 	Pinion:ShowMOTD(ply)
 end)
+
+hook.Add("PlayerDeath", "Pinion:ShowAdOnDeath", function(ply)
+	local gamemode = engine.ActiveGamemode()
+	if not table.HasValue(Pinion.GamemodesSupportingInterrupt, gamemode) then return end
+	if Pinion.motd_show_mode:GetInt() <= 1 then return end
+	
+	timer.Simple(2, function() 
+		Pinion:ShowMOTD(ply)
+	end)
+end)
+
