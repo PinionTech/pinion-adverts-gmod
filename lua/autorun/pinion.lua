@@ -25,7 +25,7 @@ Pinion.TRIGGER_CONNECT = 1
 Pinion.TRIGGER_LEVELCHANGE = 2
 
 Pinion.DURATION_FUDGE_FACTOR = 1
-Pinion.GamemodesSupportingInterrupt = {'darkrp', 'sandbox', 'terrortown', 'zombiesurvival'}
+Pinion.GamemodesSupportingInterrupt = {'darkrp', 'terrortown', 'zombiesurvival'}
 
 local function pretty_print_ip(ip)
 	return string.format("%u.%u.%u.%u", 
