@@ -4,7 +4,6 @@ Pinion = {}
 if SERVER then
 	Pinion.motd_url = CreateConVar("pinion_motd_url", "http://motd.pinion.gg/COMMUNITY/GAME/motd.html", FCVAR_ARCHIVE, "URL to to your MOTD")
 	Pinion.motd_title = CreateConVar("pinion_motd_title", "A sponsored message from your server admin", FCVAR_ARCHIVE, "Title of your MOTD")
-	Pinion.motd_required_maximum = CreateConVar("pinion_motd_max_time", "0", FCVAR_ARCHIVE, "Maximum desired viewing time for the user")
 	Pinion.motd_immunity = CreateConVar("pinion_motd_immunity", "0", FCVAR_ARCHIVE, "Set to 1 to allow immunity based on user's group")
 	Pinion.motd_immunity_group = CreateConVar("pinion_motd_immunity_group", "admin", FCVAR_ARCHIVE, "Set to the group you would like to give immunity to")
 	Pinion.motd_show_mode = CreateConVar("pinion_motd_show_mode", "1", FCVAR_ARCHIVE, "Set to 1 to show on player connect. Set to 2 to show at opportune gamemode times")
@@ -14,8 +13,11 @@ if SERVER then
 	if file.Exists("integration/" .. gamemode .. ".lua", "LUA") then
 		include("integration/" .. gamemode .. ".lua")
 	end
+	
+	game.ConsoleCommand(file.Read("cfg/pinion.cfg", "GAME") .. "\n")
 end
 
+Pinion.PluginVersion = "1.0.0"
 Pinion.MOTD = nil
 Pinion.StartTime = nil
 Pinion.RequiredTime = nil
@@ -37,8 +39,12 @@ end
 
 function Pinion:CreateMOTDPanel(title, url, duration, ip, port, steamid, trigger_type)
 	local ip = pretty_print_ip(ip)
-	local query_string = string.format("?steamID=%s&ip=%s&port=%u&trigger=%u", steamid, ip, port, trigger_type)
+	local query_string = string.format("?steamID=%s&ip=%s&port=%u&trigger=%u&plug_ver=%s", steamid, ip, port, trigger_type, self.PluginVersion)
 	local url = url .. query_string
+	
+	self.StartTime = RealTime()
+	self.RequiredTime = RealTime() + self.DURATION_FUDGE_FACTOR + duration
+	self.HasAdjustedDuration = false
 	
 	local w, h = ScrW()*0.9, ScrH()*0.9
 	self.MOTD = self.MOTD or vgui.Create("DFrame")
@@ -80,7 +86,7 @@ function Pinion:CreateMOTDPanel(title, url, duration, ip, port, steamid, trigger
 				self.Accept:SetDisabled(false)
 				self.Think = self.BaseThink
 			end
-		else
+		elseif self.HasAdjustedDuration then
 			local time_remaining = math.ceil(Pinion.RequiredTime - RealTime())
 			self.Accept:SetText("Continue in " .. time_remaining .. "s")
 		end
@@ -92,21 +98,21 @@ function Pinion:CreateMOTDPanel(title, url, duration, ip, port, steamid, trigger
 	end
 	
 	function self.MOTD.Accept:DoClick()
-		Pinion.MOTD:Close()
+		if Pinion.MOTD then
+			Pinion.MOTD:Close()
+		end
 	end
-	
-	self.StartTime = RealTime()
-	self.RequiredTime = RealTime() + self.DURATION_FUDGE_FACTOR + duration
 end
 
 function Pinion:AdjustDuration(duration)
 	self.RequiredTime = self.StartTime + self.DURATION_FUDGE_FACTOR + duration
+	self.HasAdjustedDuration = true
 end
 
 function Pinion:MOTDClosed()
 	local time_open = RealTime() - self.StartTime
 	self.MOTD.HTML:RunJavascript("windowClosed(); motd.close()")
-	
+
 	net.Start("PinionClosedMOTD")
 	net.SendToServer()
 end
@@ -117,7 +123,8 @@ function Pinion:ShowMOTD(ply)
 		return
 	end
 
-	local duration = self.motd_required_maximum:GetInt()
+	-- start with a duration of 3 while we fetch the adback duration
+	local duration = 3
 	
 	self:SendMOTDToClient(ply, duration)
 	
@@ -174,14 +181,14 @@ end
 
 function Pinion:GetUserAdDuration(ply, duration_sent, callback_adjust)
 	if not IsValid(ply) then return end
-			
+
 	http.Fetch("http://adback.pinion.gg/duration/" .. ply:SteamID(), function(body, len, headers, code)
 		if not IsValid(ply) then return end
-		
+
 		if code == 200 then
 			local duration = tonumber(body)
 			ply._LastAdDuration = duration
-			if duration and duration < duration_sent then
+			if duration then
 				callback_adjust(self, ply, duration)
 			end
 		else
