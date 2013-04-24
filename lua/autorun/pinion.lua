@@ -1,6 +1,8 @@
 AddCSLuaFile("pinion.lua")
 
+if not Pinion then
 Pinion = {}
+
 if SERVER then
 	Pinion.motd_url = CreateConVar("pinion_motd_url", "http://motd.pinion.gg/COMMUNITY/GAME/motd.html", FCVAR_ARCHIVE, "URL to to your MOTD")
 	Pinion.motd_title = CreateConVar("pinion_motd_title", "A sponsored message from your server admin", FCVAR_ARCHIVE, "Title of your MOTD")
@@ -28,6 +30,7 @@ Pinion.TRIGGER_LEVELCHANGE = 2
 
 Pinion.DURATION_FUDGE_FACTOR = 1
 Pinion.GamemodesSupportingInterrupt = {'darkrp', 'terrortown', 'zombiesurvival'}
+end
 
 local function pretty_print_ip(ip)
 	return string.format("%u.%u.%u.%u", 
