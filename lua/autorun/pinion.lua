@@ -39,7 +39,7 @@ end
 
 function Pinion:CreateMOTDPanel(title, url, duration, ip, port, steamid, trigger_type)
 	local ip = pretty_print_ip(ip)
-	local query_string = string.format("?steamID=%s&ip=%s&port=%u&trigger=%u&plug_ver=%s", steamid, ip, port, trigger_type, self.PluginVersion)
+	local query_string = string.format("?steamid=%s&ip=%s&port=%u&trigger=%u&plug_ver=%s", steamid, ip, port, trigger_type, self.PluginVersion)
 	local url = url .. query_string
 	
 	self.StartTime = RealTime()
@@ -76,19 +76,19 @@ function Pinion:CreateMOTDPanel(title, url, duration, ip, port, steamid, trigger
 	
 	self.MOTD:SetVisible(true)
 	self.MOTD:MakePopup()
-	
+
 	self.MOTD.BaseThink = self.MOTD.Think
-	function self.MOTD:Think()
-		self:BaseThink()
-		if RealTime() >= Pinion.RequiredTime then
+	function self.MOTD.Think(motdpanel)
+		motdpanel:BaseThink()
+		if RealTime() >= self.RequiredTime then
 			if IsValid(LocalPlayer()) then
-				self.Accept:SetText("Continue")
-				self.Accept:SetDisabled(false)
-				self.Think = self.BaseThink
+				motdpanel.Accept:SetText("Continue")
+				motdpanel.Accept:SetDisabled(false)
+				motdpanel.Think = motdpanel.BaseThink
 			end
 		elseif self.HasAdjustedDuration then
-			local time_remaining = math.ceil(Pinion.RequiredTime - RealTime())
-			self.Accept:SetText("Continue in " .. time_remaining .. "s")
+			local time_remaining = math.ceil(self.RequiredTime - RealTime())
+			motdpanel.Accept:SetText("Continue in " .. time_remaining .. "s")
 		end
 	end
 	
@@ -97,9 +97,9 @@ function Pinion:CreateMOTDPanel(title, url, duration, ip, port, steamid, trigger
 		Pinion:MOTDClosed()
 	end
 	
-	function self.MOTD.Accept:DoClick()
-		if Pinion.MOTD then
-			Pinion.MOTD:Close()
+	function self.MOTD.Accept.DoClick(btn)
+		if self.MOTD then
+			self.MOTD:Close()
 		end
 	end
 end
@@ -123,8 +123,8 @@ function Pinion:ShowMOTD(ply)
 		return
 	end
 
-	-- start with a duration of 3 while we fetch the adback duration
-	local duration = 3
+	-- start with a duration of 4 while we fetch the adback duration
+	local duration = 4
 	
 	self:SendMOTDToClient(ply, duration)
 	
@@ -132,7 +132,7 @@ function Pinion:ShowMOTD(ply)
 		timer.Simple(1, function()
 			if not IsValid(ply) then return end
 			
-			ply._FetchDurationTries = 5
+			ply._FetchDurationTries = 10
 			self:GetUserAdDuration(ply, duration, self.SendMOTDAdjustment)
 		end)
 	end
@@ -184,7 +184,7 @@ function Pinion:GetUserAdDuration(ply, duration_sent, callback_adjust)
 
 	http.Fetch("http://adback.pinion.gg/duration/" .. ply:SteamID(), function(body, len, headers, code)
 		if not IsValid(ply) then return end
-
+		
 		if code == 200 then
 			local duration = tonumber(body)
 			ply._LastAdDuration = duration
