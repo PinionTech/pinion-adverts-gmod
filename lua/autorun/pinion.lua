@@ -127,7 +127,7 @@ function Pinion:ShowMOTD(ply)
 	end
 
 	-- start with a duration of 4 while we fetch the adback duration
-	local duration = 4
+	local duration = 40
 	
 	self:SendMOTDToClient(ply, duration)
 	
