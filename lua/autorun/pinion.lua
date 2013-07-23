@@ -74,7 +74,7 @@ function Pinion:CreateMOTDPanel(title, url, duration, ip, port, steamid, trigger
 	self.MOTD.Accept = self.MOTD.Accept or vgui.Create("DButton", self.MOTD)
 	self.MOTD.Accept:SetSize(200, 50)
 	self.MOTD.Accept:SetPos((w / 2) - (self.MOTD.Accept:GetWide() / 2), h - 50)
-	self.MOTD.Accept:SetText("Continue")
+	self.MOTD.Accept:SetText("Please Wait")
 	self.MOTD.Accept:SetDisabled(true)
 	
 	self.MOTD:SetVisible(true)
