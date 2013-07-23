@@ -121,6 +121,14 @@ function Pinion:MOTDClosed()
 end
 
 function Pinion:ShowMOTD(ply)
+	-- check for group based immunity
+	if self.motd_immunity:GetBool() then
+		local group = self.motd_immunity_group:GetString()
+		if ply:IsUserGroup(group) then
+			return
+		end
+	end
+	
 	-- if we've already shown an ad recently, don't show another yet
 	if ply._ViewingStartTime and RealTime() < ply._ViewingStartTime + self.motd_cooldown_time:GetInt() then
 		return
@@ -243,13 +251,6 @@ end)
 
 hook.Add("PlayerInitialSpawn", "Pinion:PlayerSpawnMOTD", function(ply)
 	if not IsValid(ply) then return end
-		
-	if Pinion.motd_immunity:GetBool() then
-		local group = Pinion.motd_immunity_group:GetString()
-		if ply:IsUserGroup(group) then
-			return
-		end
-	end
 	
 	Pinion:ShowMOTD(ply)
 end)
@@ -260,6 +261,7 @@ hook.Add("PlayerDeath", "Pinion:ShowAdOnDeath", function(ply)
 	if Pinion.motd_show_mode:GetInt() <= 1 then return end
 	
 	timer.Simple(2, function() 
+		if not IsValid(ply) then return end
 		Pinion:ShowMOTD(ply)
 	end)
 end)
