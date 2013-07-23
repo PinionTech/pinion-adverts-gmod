@@ -1,7 +1,7 @@
 "AddonInfo"
 {
         "name"              "Pinion MOTD Advertisements"
-        "version"           "1.0.0"
+        "version"           "1.0.1"
         "up_date"           "Apr 23, 2013"
         "author_name"       "TODO"
         "author_email"      "TODO"
