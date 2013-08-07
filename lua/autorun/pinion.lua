@@ -28,7 +28,6 @@ Pinion.ConnectedThisMap = {}
 Pinion.TRIGGER_CONNECT = 1
 Pinion.TRIGGER_LEVELCHANGE = 2
 
-Pinion.DURATION_FUDGE_FACTOR = 1
 Pinion.GamemodesSupportingInterrupt = {'darkrp', 'terrortown', 'zombiesurvival'}
 end
 
@@ -46,7 +45,7 @@ function Pinion:CreateMOTDPanel(title, url, duration, ip, port, steamid, trigger
 	local url = url .. query_string
 	
 	self.StartTime = RealTime()
-	self.RequiredTime = RealTime() + self.DURATION_FUDGE_FACTOR + duration
+	self.RequiredTime = RealTime() + duration
 	self.HasAdjustedDuration = false
 	
 	local w, h = ScrW()*0.9, ScrH()*0.9
@@ -108,7 +107,7 @@ function Pinion:CreateMOTDPanel(title, url, duration, ip, port, steamid, trigger
 end
 
 function Pinion:AdjustDuration(duration)
-	self.RequiredTime = self.StartTime + self.DURATION_FUDGE_FACTOR + duration
+	self.RequiredTime = self.StartTime + duration
 	self.HasAdjustedDuration = true
 end
 
@@ -157,7 +156,7 @@ function Pinion:ClosedMOTD(ply)
 	if not ply._ViewingMOTD then return end
 	ply._ViewingMOTD = false
 	
-	local duration_viewed = RealTime() - (ply._ViewingStartTime + self.DURATION_FUDGE_FACTOR)
+	local duration_viewed = RealTime() - (ply._ViewingStartTime)
 	local completed = ply._LastAdDuration > 0 and duration_viewed > ply._LastAdDuration
 
 	hook.Call("Pinion:PlayerViewedAd", GAMEMODE, ply, completed)
