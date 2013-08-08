@@ -41,7 +41,7 @@ end
 
 function Pinion:CreateMOTDPanel(title, url, duration, ip, port, steamid, trigger_type)
 	local ip = pretty_print_ip(ip)
-	local query_string = string.format("?steamid=%s&ip=%s&port=%u&trigger=%u&plug_ver=%s", steamid, ip, port, trigger_type, self.PluginVersion)
+	local query_string = string.format("?si=%s&ip=%s&po=%u&tr=%u&pv=%s", steamid, ip, port, trigger_type, self.PluginVersion)
 	local url = url .. query_string
 	
 	self.StartTime = RealTime()
