@@ -18,8 +18,8 @@ Create an account at http://www.pinion.gg/signup.html
 Installation Instructions:
 - Download the Garry's Mod Pinion LUA Script from http://cp.pinion.gg
 - Download your community specific pinion.cfg file from the My Account tab
-- Place the pinion.cfg configuration file within the LUA scripts /cfg/ folder
-- Upload the /lua/ and /cfg/ folders to your gameservers /garrysmod/ directory
+- Upload the /lua/ folder to your gameservers /garrysmod/ directory
+- Upload pinion.cfg to the /cfg/ folder located within your /garrysmod/ directory
 - Restart the server
 
 Upon restarting you should see the Pinion MOTD load and display an advert.
