@@ -2,7 +2,7 @@ pinion_adverts_gmod
 ===================
 Pinion Adverts for Garry's Mod 13
 
-Release Apr 28, 2013
+Release Aug 28, 2013
 Version: 1.0.2
 
 Overview:
