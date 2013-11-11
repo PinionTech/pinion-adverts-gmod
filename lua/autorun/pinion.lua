@@ -7,7 +7,7 @@ if SERVER then
 	Pinion.motd_url = CreateConVar("pinion_motd_url", "http://motd.pinion.gg/COMMUNITY/GAME/motd.html", FCVAR_ARCHIVE, "URL to to your MOTD")
 	Pinion.motd_title = CreateConVar("pinion_motd_title", "A sponsored message from your server admin", FCVAR_ARCHIVE, "Title of your MOTD")
 	Pinion.motd_immunity = CreateConVar("pinion_motd_immunity", "0", FCVAR_ARCHIVE, "Set to 1 to allow immunity based on user's group")
-	Pinion.motd_immunity_group = CreateConVar("pinion_motd_immunity_group", "admin", FCVAR_ARCHIVE, "Set to the group you would like to give immunity to")
+	Pinion.motd_immunity_group = CreateConVar("pinion_motd_immunity_group", "admin", FCVAR_ARCHIVE, "Set to the groups you would like to give immunity to")
 	Pinion.motd_show_mode = CreateConVar("pinion_motd_show_mode", "1", FCVAR_ARCHIVE, "Set to 1 to show on player connect. Set to 2 to show at opportune gamemode times")
 	Pinion.motd_cooldown_time = CreateConVar("pinion_motd_cooldown_time", "300", FCVAR_ARCHIVE, "Minimum time in seconds between ads being shown to users")
 	
@@ -19,7 +19,7 @@ if SERVER then
 	game.ConsoleCommand(file.Read("cfg/pinion.cfg", "GAME") .. "\n")
 end
 
-Pinion.PluginVersion = "1.0.0"
+Pinion.PluginVersion = "1.0.3"
 Pinion.MOTD = nil
 Pinion.StartTime = nil
 Pinion.RequiredTime = nil
@@ -122,9 +122,12 @@ end
 function Pinion:ShowMOTD(ply)
 	-- check for group based immunity
 	if self.motd_immunity:GetBool() then
-		local group = self.motd_immunity_group:GetString()
-		if ply:IsUserGroup(group) then
-			return
+		local groups = string.Explode(",", self.motd_immunity_group:GetString())
+		for _, group in pairs(groups) do
+			local group = string.Trim(group)
+			if ply:IsUserGroup(group) then
+				return
+			end
 		end
 	end
 	
@@ -142,7 +145,7 @@ function Pinion:ShowMOTD(ply)
 		timer.Simple(1, function()
 			if not IsValid(ply) then return end
 			
-			ply._FetchDurationTries = 10
+			ply._FetchDurationTries = 5
 			self:GetUserAdDuration(ply, duration, self.SendMOTDAdjustment)
 		end)
 	end
@@ -207,6 +210,9 @@ function Pinion:GetUserAdDuration(ply, duration_sent, callback_adjust)
 				timer.Simple(3, function()
 					self:GetUserAdDuration(ply, duration_sent, callback_adjust)
 				end)
+			else
+				ErrorNoHalt("Unable to get ad duration for player " .. tostring(ply))
+				callback_adjust(self, ply, 0)
 			end
 		end
 	end)
