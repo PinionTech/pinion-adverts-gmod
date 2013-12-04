@@ -145,7 +145,7 @@ function Pinion:ShowMOTD(ply)
 		timer.Simple(1, function()
 			if not IsValid(ply) then return end
 			
-			ply._FetchDurationTries = 5
+			ply._FetchDurationTries = 15
 			self:GetUserAdDuration(ply, duration, self.SendMOTDAdjustment)
 		end)
 	end
