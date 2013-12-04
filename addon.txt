@@ -1,8 +1,8 @@
 "AddonInfo"
 {
         "name"              "Pinion MOTD Advertisements"
-        "version"           "1.0.3"
-        "up_date"           "Nov 10, 2013"
+        "version"           "1.0.4"
+        "up_date"           "Dec 5, 2013"
         "author_name"       "Pinion Tech"
         "author_email"      "support@pinion.gg"
         "info"              "Provides in-game advertisements for your server"
