@@ -19,7 +19,7 @@ if SERVER then
 	game.ConsoleCommand(file.Read("cfg/pinion.cfg", "GAME") .. "\n")
 end
 
-Pinion.PluginVersion = "1.0.3"
+Pinion.PluginVersion = "1.0.4"
 Pinion.MOTD = nil
 Pinion.StartTime = nil
 Pinion.RequiredTime = nil
