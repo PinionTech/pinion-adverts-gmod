@@ -2,8 +2,8 @@ pinion_adverts_gmod
 ===================
 Pinion Adverts for Garry's Mod 13
 
-Release Dec 5, 2013
-Version: 1.0.4
+Release Dec 8, 2014
+Version: 1.0.5
 
 Overview:
 The Pinion LUA script will help you support your community by using their eyes as virtual donations to help

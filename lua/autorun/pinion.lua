@@ -6,8 +6,9 @@ Pinion = {}
 if SERVER then
 	Pinion.motd_url = CreateConVar("pinion_motd_url", "http://motd.pinion.gg/COMMUNITY/GAME/motd.html", FCVAR_ARCHIVE, "URL to to your MOTD")
 	Pinion.motd_title = CreateConVar("pinion_motd_title", "A sponsored message from your server admin", FCVAR_ARCHIVE, "Title of your MOTD")
-	Pinion.motd_immunity = CreateConVar("pinion_motd_immunity", "0", FCVAR_ARCHIVE, "Set to 1 to allow immunity based on user's group")
-	Pinion.motd_immunity_group = CreateConVar("pinion_motd_immunity_group", "admin", FCVAR_ARCHIVE, "Set to the groups you would like to give immunity to")
+	Pinion.motd_immunity = CreateConVar("pinion_motd_immunity", "0", FCVAR_ARCHIVE, "Set to 1 to allow immunity based on user's group or Steam ID")
+	Pinion.motd_immunity_group = CreateConVar("pinion_motd_immunity_group", "admin", FCVAR_ARCHIVE, "Set to the groups you would like to give immunity to (comma separated)")
+	Pinion.motd_immunity_steamid = CreateConVar("pinion_motd_immunity_steamID", "", FCVAR_ARCHIVE, "Set to the steamids you would like to give immunity to (comma seaparated)")
 	Pinion.motd_show_mode = CreateConVar("pinion_motd_show_mode", "1", FCVAR_ARCHIVE, "Set to 1 to show on player connect. Set to 2 to show at opportune gamemode times")
 	Pinion.motd_cooldown_time = CreateConVar("pinion_motd_cooldown_time", "300", FCVAR_ARCHIVE, "Minimum time in seconds between ads being shown to users")
 	
@@ -61,13 +62,7 @@ function Pinion:CreateMOTDPanel(title, url, duration, ip, port, steamid, trigger
 	self.MOTD.HTML:SetSize(w, h - 75)
 	self.MOTD.HTML:OpenURL(url)
 	self.MOTD.HTML:AddFunction( "motd", "close", function( param )
-		-- just to be safe, we'll give the browser time to finish
-		timer.Simple(3, function()
-			if self.MOTD then
-				self.MOTD:Remove()
-				self.MOTD = nil
-			end
-		end)
+		-- noop, we simply let the panel hide
 	end )
 	
 	self.MOTD.Accept = self.MOTD.Accept or vgui.Create("DButton", self.MOTD)
@@ -126,6 +121,14 @@ function Pinion:ShowMOTD(ply)
 		for _, group in pairs(groups) do
 			local group = string.Trim(group)
 			if ply:IsUserGroup(group) then
+				return
+			end
+		end
+		
+		local steamids = string.Explode(",", self.motd_immunity_steamid:GetString())
+		for _, steamid in pairs(steamids) do
+			local steamid = string.Trim(steamid)
+			if ply:SteamID() == steamid then
 				return
 			end
 		end
