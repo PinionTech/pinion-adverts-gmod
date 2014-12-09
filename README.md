@@ -7,8 +7,7 @@ Version: 1.0.5
 
 Overview:
 The Pinion LUA script will help you support your community by using their eyes as virtual donations to help
-offset server costs. We will purchase impressions on a CPM basis (per 1000) at a rate of $2.20 USD 
-for impressions that complete. 
+offset server costs. We will purchase impressions on a CPM basis (per 1000) at a rate of $3.00 / $2.20 USD depending on region for impressions that complete. 
 
 For more information visit http://www.pinion.gg
 
