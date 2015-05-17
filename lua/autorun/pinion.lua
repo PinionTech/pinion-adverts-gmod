@@ -20,7 +20,7 @@ if SERVER then
 	game.ConsoleCommand(file.Read("cfg/pinion.cfg", "GAME") .. "\n")
 end
 
-Pinion.PluginVersion = "1.0.4"
+Pinion.PluginVersion = "1.0.6"
 Pinion.MOTD = nil
 Pinion.StartTime = nil
 Pinion.RequiredTime = nil
@@ -139,8 +139,8 @@ function Pinion:ShowMOTD(ply)
 		return
 	end
 
-	-- start with a duration of 4 while we fetch the adback duration
-	local duration = 40
+	-- start with a locked duration of 15s while we fetch the adback duration
+	local duration = 15
 	
 	self:SendMOTDToClient(ply, duration)
 	
