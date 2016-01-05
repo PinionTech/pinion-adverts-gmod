@@ -2,8 +2,10 @@ AddCSLuaFile("pinion.lua")
 
 if not Pinion then
 Pinion = {}
+Pinion.PluginVersion = "1.0.7"
 
 if SERVER then
+	Pinion.motd_version = CreateConVar("pinion_motd_version", Pinion.PluginVersion, FCVAR_NOTIFY, "Pinion MOTD Plugin")
 	Pinion.motd_url = CreateConVar("pinion_motd_url", "http://motd.pinion.gg/COMMUNITY/GAME/motd.html", FCVAR_ARCHIVE, "URL to to your MOTD")
 	Pinion.motd_title = CreateConVar("pinion_motd_title", "A sponsored message from your server admin", FCVAR_ARCHIVE, "Title of your MOTD")
 	Pinion.motd_immunity = CreateConVar("pinion_motd_immunity", "0", FCVAR_ARCHIVE, "Set to 1 to allow immunity based on user's group or Steam ID")
@@ -20,7 +22,6 @@ if SERVER then
 	game.ConsoleCommand(file.Read("cfg/pinion.cfg", "GAME") .. "\n")
 end
 
-Pinion.PluginVersion = "1.0.6"
 Pinion.MOTD = nil
 Pinion.StartTime = nil
 Pinion.RequiredTime = nil
